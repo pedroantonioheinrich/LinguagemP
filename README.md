@@ -149,6 +149,20 @@ O "Tradutor". Converte as estruturas da Linguagem P para a sintaxe da linguagem 
 - `ligar(pino)` / `desligar(pino)`: Simula sinais digitais.
 - `esperar(ms)`: Pausa a execução em milissegundos.
 
+### Funções Personalizadas
+Agora a Linguagem P suporta a criação de funções com parâmetros e retorno.
+- **Sintaxe:** `funcao inteiro nome(inteiro param) { ... }`
+
+### Chamadas de Funções e Escopo
+O compilador gerencia chamadas de funções tanto em comandos isolados quanto dentro de atribuições.
+
+### Melhoria no Analisador Léxico
+- Suporte a identificadores com underline (`_`).
+- Melhoria no comando `exibir()` para diferenciar strings de números automaticamente.
+
+### Validação Semântica Avançada
+O compilador agora verifica se uma função foi declarada antes de ser chamada, disparando erros claros no console se houver inconsistências.
+
 ---
 
 ## 📜 6. Gramática Formal (BNF)
@@ -235,8 +249,5 @@ make clean && make
 * `exemplos/`: Scripts de teste.
 * `Makefile`: Automação de build.
 
-```
-
----
 
 ```

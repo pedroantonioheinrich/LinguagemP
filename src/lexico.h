@@ -7,6 +7,7 @@ typedef enum {
     TOKEN_FIM = 0,      // Definir explicitamente como 0 ajuda em alguns testes
     TOKEN_ERRO,
     TOKEN_INICIO,
+    TOKEN_FUNCAO,
     TOKEN_INTEIRO,
     TOKEN_REAL,
     TOKEN_SE,

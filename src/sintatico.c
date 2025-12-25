@@ -24,84 +24,78 @@ void consumir(TipoToken tipo, const char* msg) {
 void comando();
 void bloco();
 
-void processar_expressao_logica() {
-    while(token_atual.tipo != TOKEN_FECHA_PARENTESES && token_atual.tipo != TOKEN_PONTO_VIRGULA) {
-        if (token_atual.tipo == TOKEN_E) gerador_escrever(" && ");
-        else if (token_atual.tipo == TOKEN_OU) gerador_escrever(" || ");
-        else { gerador_escrever(" "); gerador_escrever(token_atual.lexema); gerador_escrever(" "); }
+void declaracao_funcao() {
+    consumir(TOKEN_FUNCAO, "funcao");
+    TipoToken tipo_ret = token_atual.tipo;
+    if (tipo_ret == TOKEN_INTEIRO) gerador_escrever("int ");
+    else if (tipo_ret == TOKEN_REAL) gerador_escrever("float ");
+    else gerador_escrever("void ");
+    proximo();
+    char nome_funcao[100];
+    strcpy(nome_funcao, token_atual.lexema);
+    semantico_adicionar_funcao(nome_funcao, tipo_ret, token_atual.linha);
+    gerador_escrever(nome_funcao);
+    proximo();
+    consumir(TOKEN_ABRE_PARENTESES, "(");
+    gerador_escrever("(");
+    if (token_atual.tipo == TOKEN_INTEIRO || token_atual.tipo == TOKEN_REAL) {
+        gerador_escrever(token_atual.tipo == TOKEN_INTEIRO ? "int " : "float ");
+        proximo();
+        gerador_escrever(token_atual.lexema);
+        semantico_adicionar(token_atual.lexema, TOKEN_VALOR, token_atual.linha);
         proximo();
     }
-}
-
-void comando_para() {
-    consumir(TOKEN_PARA, "para");
-    consumir(TOKEN_ABRE_PARENTESES, "(");
-    gerador_escrever("for (");
-    if (token_atual.tipo == TOKEN_INTEIRO || token_atual.tipo == TOKEN_REAL) {
-        TipoToken t = token_atual.tipo; proximo();
-        gerador_escrever(t == TOKEN_INTEIRO ? "int " : "float ");
-        gerador_escrever(token_atual.lexema);
-        semantico_adicionar(token_atual.lexema, t, token_atual.linha);
-        proximo(); consumir(TOKEN_ATRIBUICAO, "="); gerador_escrever(" = ");
-    }
-    while(token_atual.tipo != TOKEN_PONTO_VIRGULA) { gerador_escrever(token_atual.lexema); proximo(); }
-    gerador_escrever("; "); consumir(TOKEN_PONTO_VIRGULA, ";");
-    processar_expressao_logica();
-    gerador_escrever("; "); consumir(TOKEN_PONTO_VIRGULA, ";");
-    while(token_atual.tipo != TOKEN_FECHA_PARENTESES) { gerador_escrever(token_atual.lexema); proximo(); }
-    gerador_escrever(") "); consumir(TOKEN_FECHA_PARENTESES, ")");
+    gerador_escrever(")");
+    consumir(TOKEN_FECHA_PARENTESES, ")");
     bloco();
 }
 
 void comando() {
-    if (token_atual.tipo == TOKEN_INTEIRO || token_atual.tipo == TOKEN_REAL) {
-        TipoToken t_decl = token_atual.tipo; proximo();
-        char n_var[100]; strcpy(n_var, token_atual.lexema);
-        semantico_adicionar(n_var, t_decl, token_atual.linha);
-        gerador_escrever(t_decl == TOKEN_INTEIRO ? "int " : "float ");
-        gerador_escrever(n_var); proximo();
+    if (token_atual.tipo == TOKEN_IDENTIFICADOR) {
+        char n_id[100]; strcpy(n_id, token_atual.lexema);
+        int lin = token_atual.linha;
+        proximo();
+        if (token_atual.tipo == TOKEN_ABRE_PARENTESES) { 
+            semantico_validar_chamada(n_id, lin);
+            gerador_escrever(n_id); gerador_escrever("("); proximo();
+            while(token_atual.tipo != TOKEN_FECHA_PARENTESES) { gerador_escrever(token_atual.lexema); proximo(); }
+            gerador_escrever(");\n    "); consumir(TOKEN_FECHA_PARENTESES, ")"); consumir(TOKEN_PONTO_VIRGULA, ";");
+        } 
+        else if (token_atual.tipo == TOKEN_ATRIBUICAO) {
+            gerador_escrever(n_id); gerador_escrever(" = "); proximo();
+            while(token_atual.tipo != TOKEN_PONTO_VIRGULA) {
+                if (token_atual.tipo == TOKEN_IDENTIFICADOR) {
+                    // Verifica se é chamada de função espiando o próximo caractere no buffer do arquivo
+                    int c = fgetc(arquivo_global); ungetc(c, arquivo_global);
+                    if (c == '(') semantico_validar_chamada(token_atual.lexema, token_atual.linha);
+                }
+                gerador_escrever(token_atual.lexema); proximo();
+            }
+            gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
+        }
+    }
+    else if (token_atual.tipo == TOKEN_INTEIRO || token_atual.tipo == TOKEN_REAL) {
+        TipoToken t = token_atual.tipo; proximo();
+        char var_nome[100]; strcpy(var_nome, token_atual.lexema);
+        semantico_adicionar(var_nome, t, token_atual.linha);
+        gerador_escrever(t == TOKEN_INTEIRO ? "int " : "float ");
+        gerador_escrever(var_nome); proximo();
         if (token_atual.tipo == TOKEN_ATRIBUICAO) {
-            proximo();
+            gerador_escrever(" = "); proximo();
             if (token_atual.tipo == TOKEN_LER) {
                 proximo(); consumir(TOKEN_ABRE_PARENTESES, "("); consumir(TOKEN_FECHA_PARENTESES, ")");
-                gerador_escrever("; printf(\"Entrada: \"); scanf(\"");
-                gerador_escrever(t_decl == TOKEN_INTEIRO ? "%d\", &" : "%f\", &");
-                gerador_escrever(n_var); gerador_escrever(")");
+                gerador_escrever(t == TOKEN_INTEIRO ? "0; scanf(\"%d\", &" : "0.0; scanf(\"%f\", &");
+                gerador_escrever(var_nome); gerador_escrever(")");
             } else {
-                gerador_escrever(" = ");
                 while(token_atual.tipo != TOKEN_PONTO_VIRGULA) { gerador_escrever(token_atual.lexema); proximo(); }
             }
         }
         gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
     }
-    else if (token_atual.tipo == TOKEN_SE || token_atual.tipo == TOKEN_ENQUANTO) {
-        gerador_escrever(token_atual.tipo == TOKEN_ENQUANTO ? "while (" : "if (");
-        proximo(); consumir(TOKEN_ABRE_PARENTESES, "(");
-        processar_expressao_logica();
-        gerador_escrever(")"); consumir(TOKEN_FECHA_PARENTESES, ")");
-        bloco();
-        if (token_atual.tipo == TOKEN_SENAO) { gerador_escrever("else "); proximo(); bloco(); }
-    }
-    else if (token_atual.tipo == TOKEN_PARA) { comando_para(); }
-    else if (token_atual.tipo == TOKEN_IDENTIFICADOR) {
-        char n_id[100]; strcpy(n_id, token_atual.lexema);
-        proximo();
-        if (token_atual.tipo == TOKEN_ATRIBUICAO) {
-            if (!semantico_pode_atribuir(n_id)) { P_LOG_ERRO("Erro: Constante!"); exit(1); }
-            gerador_escrever(n_id); 
-            proximo();
-            if (token_atual.tipo == TOKEN_LER) {
-                proximo(); consumir(TOKEN_ABRE_PARENTESES, "("); consumir(TOKEN_FECHA_PARENTESES, ")");
-                Simbolo* s = semantico_buscar(n_id);
-                gerador_escrever(" = 0; scanf(\"");
-                gerador_escrever(s->tipo == TOKEN_INTEIRO ? "%d\", &" : "%f\", &");
-                gerador_escrever(n_id); gerador_escrever(")");
-            } else {
-                gerador_escrever(" = ");
-                while(token_atual.tipo != TOKEN_PONTO_VIRGULA) { gerador_escrever(token_atual.lexema); proximo(); }
-            }
-            gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
-        }
+    else if (token_atual.tipo == TOKEN_RETORNE) {
+        gerador_escrever("return "); proximo();
+        while(token_atual.tipo != TOKEN_PONTO_VIRGULA) { gerador_escrever(token_atual.lexema); proximo(); }
+        gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
     }
     else if (token_atual.tipo == TOKEN_EXIBIR) {
         proximo(); consumir(TOKEN_ABRE_PARENTESES, "(");
@@ -112,29 +106,26 @@ void comando() {
         }
         proximo(); consumir(TOKEN_FECHA_PARENTESES, ")"); gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
     }
-    else if (token_atual.tipo == TOKEN_ESPERAR) {
-        proximo(); consumir(TOKEN_ABRE_PARENTESES, "(");
-        gerador_escrever("usleep("); gerador_escrever(token_atual.lexema); gerador_escrever(" * 1000)");
-        proximo(); consumir(TOKEN_FECHA_PARENTESES, ")"); gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
-    }
-    else { proximo(); }
 }
 
 void bloco() {
     consumir(TOKEN_ABRE_CHAVE, "{"); gerador_escrever(" {\n    ");
     while (token_atual.tipo != TOKEN_FECHA_CHAVE && token_atual.tipo != TOKEN_FIM) comando();
-    consumir(TOKEN_FECHA_CHAVE, "}"); gerador_escrever("}\n\n");
+    gerador_escrever("}\n\n"); consumir(TOKEN_FECHA_CHAVE, "}"); 
 }
 
 void analisar(FILE* arquivo) {
     arquivo_global = arquivo;
     gerador_abrir("codigo_gerado.c");
+    gerador_escrever("#include <stdio.h>\n#include <unistd.h>\n\n");
     proximo();
-    if (token_atual.tipo == TOKEN_INICIO) {
-        proximo(); consumir(TOKEN_ABRE_PARENTESES, "("); consumir(TOKEN_FECHA_PARENTESES, ")");
-        gerador_escrever("int main() ");
-        bloco();
+    while (token_atual.tipo != TOKEN_FIM) {
+        if (token_atual.tipo == TOKEN_FUNCAO) declaracao_funcao();
+        else if (token_atual.tipo == TOKEN_INICIO) {
+            proximo(); consumir(TOKEN_ABRE_PARENTESES, "("); consumir(TOKEN_FECHA_PARENTESES, ")");
+            gerador_escrever("int main() "); bloco();
+        } else proximo();
     }
     gerador_fechar();
-    P_LOG_INFO("Analise Sintatica v1.2 concluida.");
+    P_LOG_INFO("V1.3: Analise concluida com Sucesso.");
 }

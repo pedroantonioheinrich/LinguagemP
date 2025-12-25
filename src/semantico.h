@@ -11,8 +11,7 @@ typedef struct {
 
 void semantico_adicionar(const char* nome, TipoToken tipo, int linha);
 void semantico_marcar_constante(const char* nome);
-int semantico_existe(const char* nome);
 int semantico_pode_atribuir(const char* nome);
-TipoToken semantico_get_tipo(const char* nome);
+Simbolo* semantico_buscar(const char* nome); // A função que faltava
 
 #endif

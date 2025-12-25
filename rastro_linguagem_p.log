@@ -64,3 +64,5 @@ Thu Dec 25 19:20:01 2025 [INFO] --- Iniciando Compilacao da Linguagem P --- (em 
 Thu Dec 25 19:20:01 2025 [INFO] Analise Sintatica e Geracao de codigo concluidas com sucesso. (em src/sintatico.c:39)
 Thu Dec 25 19:22:24 2025 [INFO] --- Iniciando Compilacao da Linguagem P --- (em src/principal.c:17)
 Thu Dec 25 19:22:24 2025 [INFO] Analise Sintatica e Geracao de codigo concluidas com sucesso. (em src/sintatico.c:83)
+Thu Dec 25 19:38:28 2025 [INFO] --- Iniciando Compilacao da Linguagem P --- (em src/principal.c:17)
+Thu Dec 25 19:38:28 2025 [INFO] Analise Sintatica v1.2 concluida. (em src/sintatico.c:139)

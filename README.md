@@ -55,6 +55,18 @@ O "Tradutor". Ele converte as estruturas da Linguagem P para a sintaxe da lingua
 - `desligar(pino)`: Simula sinal LOW (0v).
 - `esperar(tempo_ms)`: Pausa a execução do programa pelo tempo especificado em milissegundos.
 
+### Interatividade com `ler()`
+Agora a Linguagem P permite entrada de dados dinâmica. O compilador identifica o tipo da variável e gera automaticamente o `scanf` correspondente.
+- **Exemplo:** `inteiro idade = ler();`
+
+### Operadores Lógicos por Extenso
+Para tornar a leitura mais natural, implementamos os operadores lógicos em português:
+- `e` -> Traduzido para `&&`
+- `ou` -> Traduzido para `||`
+
+### Verificação Semântica de Tipos (Type Checking)
+O compilador agora valida se as operações e atribuições são compatíveis com os tipos declarados, evitando erros de execução no programa final.
+
 
 
 ---

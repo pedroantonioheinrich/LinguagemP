@@ -28,7 +28,7 @@ $(TARGET): $(OBJS)
 
 # Regra especial para rodar o teste atual (teste_logica.lp)
 run: all
-	./$(TARGET) exemplos/teste_v11.lp
+	./$(TARGET) exemplos/teste_v2.lp
 	gcc codigo_gerado.c -o meu_programa_p
 	./meu_programa_p
 

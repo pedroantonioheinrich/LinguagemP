@@ -152,11 +152,17 @@ Abaixo está a definição formal da sintaxe da Linguagem P em Backus-Naur Form.
 
 <comando>          ::= <declaracao> ";"
                      | <atribuicao> ";"
+                     | <atribuicao_composta> ";"
                      | <comando_se>
                      | <comando_enquanto>
+                     | <comando_para>
                      | <comando_exibir> ";"
                      | <comando_hardware> ";"
-                     | <comando_esperar> ";"
+
+<atribuicao_composta> ::= <id> "+=" <expressao>
+                        | <id> "-=" <expressao>
+
+<comando_para>     ::= "para" "(" [<declaracao_simples> | <atribuicao>] ";" <expressao_logica> ";" <atribuicao> ")" <bloco>
 
 <declaracao>       ::= "inteiro" <id> [ "=" <expressao> ]
                      | "real" <id> [ "=" <expressao> ]

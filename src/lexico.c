@@ -24,7 +24,6 @@ Token proximo_token(FILE *arquivo) {
         if (c == '\n') { linha_atual++; coluna_atual = 1; continue; }
         if (isspace(c)) continue;
 
-        // Suporte a Comentários de Linha //
         if (c == '/') {
             int prox = fgetc(arquivo);
             if (prox == '/') {
@@ -34,7 +33,6 @@ Token proximo_token(FILE *arquivo) {
             } else { ungetc(prox, arquivo); }
         }
 
-        // Operadores e Símbolos (incluindo %)
         if (c == '%') return criar_token(TOKEN_OPERADOR, "%");
         if (c == '(') return criar_token(TOKEN_ABRE_PARENTESES, "(");
         if (c == ')') return criar_token(TOKEN_FECHA_PARENTESES, ")");
@@ -43,11 +41,28 @@ Token proximo_token(FILE *arquivo) {
         if (c == ';') return criar_token(TOKEN_PONTO_VIRGULA, ";");
         if (c == ',') return criar_token(TOKEN_VIRGULA, ",");
         
+        // Lógica para =, ==
         if (c == '=') {
             int prox = fgetc(arquivo);
             if (prox == '=') return criar_token(TOKEN_OPERADOR, "==");
             ungetc(prox, arquivo);
             return criar_token(TOKEN_ATRIBUICAO, "=");
+        }
+
+        // Lógica para +, +=
+        if (c == '+') {
+            int prox = fgetc(arquivo);
+            if (prox == '=') return criar_token(TOKEN_MAIS_IGUAL, "+=");
+            ungetc(prox, arquivo);
+            return criar_token(TOKEN_OPERADOR, "+");
+        }
+
+        // Lógica para -, -=
+        if (c == '-') {
+            int prox = fgetc(arquivo);
+            if (prox == '=') return criar_token(TOKEN_MENOS_IGUAL, "-=");
+            ungetc(prox, arquivo);
+            return criar_token(TOKEN_OPERADOR, "-");
         }
 
         if (c == '<' || c == '>') {
@@ -57,12 +72,8 @@ Token proximo_token(FILE *arquivo) {
             return criar_token(TOKEN_OPERADOR, op);
         }
         
-        if (c == '+' || c == '-' || c == '*') {
-            char op[2] = {c, '\0'};
-            return criar_token(TOKEN_OPERADOR, op);
-        }
+        if (c == '*') return criar_token(TOKEN_OPERADOR, "*");
 
-        // Cadeias de Caracteres (Strings)
         if (c == '"') {
             char buffer[100]; int i = 0;
             while ((c = fgetc(arquivo)) != '"' && c != EOF && i < 99) buffer[i++] = c;
@@ -70,7 +81,6 @@ Token proximo_token(FILE *arquivo) {
             return criar_token(TOKEN_CADEIA, buffer);
         }
 
-        // Números (Valores)
         if (isdigit(c)) {
             char buffer[100]; int i = 0;
             buffer[i++] = c;
@@ -80,7 +90,6 @@ Token proximo_token(FILE *arquivo) {
             return criar_token(TOKEN_VALOR, buffer);
         }
 
-        // Identificadores e Palavras Reservadas
         if (isalpha(c)) {
             char buffer[100]; int i = 0;
             buffer[i++] = c;
@@ -101,6 +110,7 @@ Token proximo_token(FILE *arquivo) {
             if (strcmp(buffer, "desligar") == 0) return criar_token(TOKEN_DESLIGAR, "desligar");
             if (strcmp(buffer, "esperar") == 0) return criar_token(TOKEN_ESPERAR, "esperar");
             if (strcmp(buffer, "retorne") == 0) return criar_token(TOKEN_RETORNE, "retorne");
+            if (strcmp(buffer, "para") == 0) return criar_token(TOKEN_PARA, "para"); // Já adicionei o PARA!
 
             return criar_token(TOKEN_IDENTIFICADOR, buffer);
         }

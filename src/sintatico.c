@@ -24,6 +24,50 @@ void consumir(TipoToken tipo, const char* msg) {
 void comando();
 void bloco();
 
+// Nova função auxiliar para processar o laço PARA
+void comando_para() {
+    consumir(TOKEN_PARA, "para");
+    consumir(TOKEN_ABRE_PARENTESES, "(");
+    gerador_escrever("for (");
+
+    // 1. Inicialização (ex: inteiro i = 0)
+    if (token_atual.tipo == TOKEN_INTEIRO || token_atual.tipo == TOKEN_REAL) {
+        TipoToken t_decl = token_atual.tipo;
+        proximo();
+        char n_var[100]; strcpy(n_var, token_atual.lexema);
+        semantico_adicionar(n_var, t_decl, token_atual.linha);
+        gerador_escrever(t_decl == TOKEN_INTEIRO ? "int " : "float ");
+        gerador_escrever(n_var); proximo();
+        consumir(TOKEN_ATRIBUICAO, "="); gerador_escrever(" = ");
+    } else {
+        // Atribuição simples (ex: i = 0)
+        gerador_escrever(token_atual.lexema); proximo();
+        consumir(TOKEN_ATRIBUICAO, "="); gerador_escrever(" = ");
+    }
+
+    while(token_atual.tipo != TOKEN_PONTO_VIRGULA) {
+        gerador_escrever(token_atual.lexema); gerador_escrever(" ");
+        proximo();
+    }
+    gerador_escrever("; "); consumir(TOKEN_PONTO_VIRGULA, ";");
+
+    // 2. Condição (ex: i < 10)
+    while(token_atual.tipo != TOKEN_PONTO_VIRGULA) {
+        gerador_escrever(token_atual.lexema); gerador_escrever(" ");
+        proximo();
+    }
+    gerador_escrever("; "); consumir(TOKEN_PONTO_VIRGULA, ";");
+
+    // 3. Incremento (ex: i = i + 1 ou i += 1)
+    while(token_atual.tipo != TOKEN_FECHA_PARENTESES) {
+        gerador_escrever(token_atual.lexema); gerador_escrever(" ");
+        proximo();
+    }
+    gerador_escrever(") "); consumir(TOKEN_FECHA_PARENTESES, ")");
+
+    bloco();
+}
+
 void analisar(FILE* arquivo) {
     arquivo_global = arquivo;
     gerador_abrir("codigo_gerado.c");
@@ -44,7 +88,7 @@ int eh_palavra_reservada(TipoToken tipo) {
             tipo == TOKEN_LER || tipo == TOKEN_LIGAR || tipo == TOKEN_DESLIGAR || 
             tipo == TOKEN_ESPERAR || tipo == TOKEN_RETORNE || tipo == TOKEN_INICIO || 
             tipo == TOKEN_INTEIRO || tipo == TOKEN_REAL || tipo == TOKEN_CONSTANTE ||
-            tipo == TOKEN_SENAO);
+            tipo == TOKEN_SENAO || tipo == TOKEN_PARA);
 }
 
 void comando() {
@@ -80,6 +124,9 @@ void comando() {
         }
         gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
     }
+    else if (token_atual.tipo == TOKEN_PARA) {
+        comando_para();
+    }
     else if (token_atual.tipo == TOKEN_SE || token_atual.tipo == TOKEN_ENQUANTO) {
         int loop = (token_atual.tipo == TOKEN_ENQUANTO);
         gerador_escrever(loop ? "while" : "if");
@@ -95,12 +142,22 @@ void comando() {
     else if (token_atual.tipo == TOKEN_IDENTIFICADOR && !eh_palavra_reservada(token_atual.tipo)) {
         char n_id[100]; strcpy(n_id, token_atual.lexema);
         proximo();
-        if (token_atual.tipo == TOKEN_ATRIBUICAO) {
+        
+        if (token_atual.tipo == TOKEN_ATRIBUICAO || 
+            token_atual.tipo == TOKEN_MAIS_IGUAL || 
+            token_atual.tipo == TOKEN_MENOS_IGUAL) {
+            
             if (!semantico_pode_atribuir(n_id)) { 
                 char e_msg[256]; snprintf(e_msg, 256, "Erro Semantico: A constante '%s' nao pode ser alterada!", n_id);
                 P_LOG_ERRO(e_msg); exit(1); 
             }
-            gerador_escrever(n_id); gerador_escrever(" = "); proximo();
+
+            gerador_escrever(n_id);
+            if (token_atual.tipo == TOKEN_ATRIBUICAO) gerador_escrever(" = ");
+            else if (token_atual.tipo == TOKEN_MAIS_IGUAL) gerador_escrever(" += ");
+            else if (token_atual.tipo == TOKEN_MENOS_IGUAL) gerador_escrever(" -= ");
+            
+            proximo();
             while (token_atual.tipo != TOKEN_PONTO_VIRGULA) {
                 gerador_escrever(" "); gerador_escrever(token_atual.lexema); gerador_escrever(" ");
                 proximo();
@@ -131,10 +188,6 @@ void comando() {
         proximo(); consumir(TOKEN_ABRE_PARENTESES, "(");
         gerador_escrever("usleep("); gerador_escrever(token_atual.lexema); gerador_escrever(" * 1000)");
         proximo(); consumir(TOKEN_FECHA_PARENTESES, ")"); gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
-    }
-    else if (token_atual.tipo == TOKEN_RETORNE) {
-        gerador_escrever("return "); proximo(); gerador_escrever(token_atual.lexema);
-        proximo(); gerador_escrever(";\n    "); consumir(TOKEN_PONTO_VIRGULA, ";");
     }
     else { proximo(); }
 }

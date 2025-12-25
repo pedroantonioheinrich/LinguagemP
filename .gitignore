@@ -1,0 +1,5 @@
+*.o
+lp_compilador
+meu_programa_p
+codigo_gerado.c
+.vscode/

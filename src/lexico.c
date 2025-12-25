@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include "lexico.h"
 
-// Definição real das variáveis (removido o extern para criar o espaço em memória)
 int linha_atual = 1;
 int coluna_atual = 1;
 
@@ -25,15 +24,20 @@ Token proximo_token(FILE *arquivo) {
         if (c == '\n') { linha_atual++; coluna_atual = 1; continue; }
         if (isspace(c)) continue;
 
+        // Comentários e Divisão
         if (c == '/') {
             int prox = fgetc(arquivo);
             if (prox == '/') {
                 while ((c = fgetc(arquivo)) != '\n' && c != EOF);
                 linha_atual++; coluna_atual = 1;
                 continue;
-            } else { ungetc(prox, arquivo); }
+            } else { 
+                ungetc(prox, arquivo); 
+                return criar_token(TOKEN_OPERADOR, "/"); 
+            }
         }
 
+        // Operadores de Pontuação e Chaves
         if (c == '%') return criar_token(TOKEN_OPERADOR, "%");
         if (c == '(') return criar_token(TOKEN_ABRE_PARENTESES, "(");
         if (c == ')') return criar_token(TOKEN_FECHA_PARENTESES, ")");
@@ -42,11 +46,32 @@ Token proximo_token(FILE *arquivo) {
         if (c == ';') return criar_token(TOKEN_PONTO_VIRGULA, ";");
         if (c == ',') return criar_token(TOKEN_VIRGULA, ",");
         
+        // Operadores que podem ter dois caracteres (==, !=, <=, >=)
         if (c == '=') {
             int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_OPERADOR, "==");
+            if (prox == '=') return criar_token(TOKEN_IGUAL, "==");
             ungetc(prox, arquivo);
             return criar_token(TOKEN_ATRIBUICAO, "=");
+        }
+
+        if (c == '!') {
+            int prox = fgetc(arquivo);
+            if (prox == '=') return criar_token(TOKEN_DIFERENTE, "!=");
+            ungetc(prox, arquivo); // Se for só '!', o C vai dar erro depois, mas tratamos aqui
+        }
+
+        if (c == '<') {
+            int prox = fgetc(arquivo);
+            if (prox == '=') return criar_token(TOKEN_MENOR_IGUAL, "<=");
+            ungetc(prox, arquivo);
+            return criar_token(TOKEN_MENOR, "<");
+        }
+
+        if (c == '>') {
+            int prox = fgetc(arquivo);
+            if (prox == '=') return criar_token(TOKEN_MAIS_IGUAL, ">=");
+            ungetc(prox, arquivo);
+            return criar_token(TOKEN_MAIOR, ">");
         }
 
         if (c == '+') {
@@ -63,15 +88,9 @@ Token proximo_token(FILE *arquivo) {
             return criar_token(TOKEN_OPERADOR, "-");
         }
 
-        if (c == '<' || c == '>') {
-            char op[3] = {c, '\0', '\0'};
-            int prox = fgetc(arquivo);
-            if (prox == '=') op[1] = '='; else ungetc(prox, arquivo);
-            return criar_token(TOKEN_OPERADOR, op);
-        }
-        
         if (c == '*') return criar_token(TOKEN_OPERADOR, "*");
 
+        // Strings
         if (c == '"') {
             char buffer[100]; int i = 0;
             while ((c = fgetc(arquivo)) != '"' && c != EOF && i < 99) buffer[i++] = c;
@@ -79,6 +98,7 @@ Token proximo_token(FILE *arquivo) {
             return criar_token(TOKEN_CADEIA, buffer);
         }
 
+        // Números
         if (isdigit(c)) {
             char buffer[100]; int i = 0;
             buffer[i++] = c;
@@ -88,6 +108,7 @@ Token proximo_token(FILE *arquivo) {
             return criar_token(TOKEN_VALOR, buffer);
         }
 
+        // Identificadores e Palavras-Chave
         if (isalpha(c) || c == '_') {
             char buffer[100]; int i = 0;
             buffer[i++] = c;
@@ -112,6 +133,8 @@ Token proximo_token(FILE *arquivo) {
             if (strcmp(buffer, "para") == 0) return criar_token(TOKEN_PARA, "para"); 
             if (strcmp(buffer, "e") == 0) return criar_token(TOKEN_E, "&&");
             if (strcmp(buffer, "ou") == 0) return criar_token(TOKEN_OU, "||");
+            if (strcmp(buffer, "de") == 0) return criar_token(TOKEN_DE, "de");
+            if (strcmp(buffer, "ate") == 0) return criar_token(TOKEN_ATE, "ate");
 
             return criar_token(TOKEN_IDENTIFICADOR, buffer);
         }

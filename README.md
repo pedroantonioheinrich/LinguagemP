@@ -1,14 +1,10 @@
-Esta é uma documentação completa e técnica, detalhando cada engrenagem do seu compilador. Com este `README.md`, qualquer pessoa (ou você mesmo no futuro) entenderá a arquitetura robusta que você construiu.
-
----
-
-### 📄 Arquivo: `README.md`
 
 ```markdown
 # 🚀 Linguagem P - Compilador de Alto Nível para Simulação de Hardware
 
 A **Linguagem P** é uma linguagem de programação procedural e imperativa, desenvolvida para simplificar a programação de sistemas embarcados e simulação de hardware. Ela abstrai a complexidade do C puro, oferecendo uma sintaxe amigável em português, enquanto mantém a performance através de uma tradução direta para código nativo.
 
+CRIADA POR PEDRO ANTÔNIO HEINRICH NETO
 ---
 
 ## 🏗️ 1. Arquitetura do Compilador

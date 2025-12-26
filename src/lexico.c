@@ -1,143 +1,78 @@
 #include <stdio.h>
-#include <ctype.h>
 #include <string.h>
-#include <stdlib.h>
+#include <ctype.h>
 #include "lexico.h"
 
-int linha_atual = 1;
-int coluna_atual = 1;
-
-Token criar_token(TipoToken tipo, const char* lexema) {
+Token proximo_token(FILE* arquivo) {
     Token t;
-    t.tipo = tipo;
-    strncpy(t.lexema, lexema, 99);
-    t.lexema[99] = '\0';
-    t.linha = linha_atual;
-    t.coluna = coluna_atual;
-    return t;
-}
+    int c = fgetc(arquivo);
 
-Token proximo_token(FILE *arquivo) {
-    int c;
-    while ((c = fgetc(arquivo)) != EOF) {
-        coluna_atual++;
-        if (c == '\n') { linha_atual++; coluna_atual = 1; continue; }
-        if (isspace(c)) continue;
-
-        // Comentários e Divisão
-        if (c == '/') {
-            int prox = fgetc(arquivo);
-            if (prox == '/') {
-                while ((c = fgetc(arquivo)) != '\n' && c != EOF);
-                linha_atual++; coluna_atual = 1;
-                continue;
-            } else { 
-                ungetc(prox, arquivo); 
-                return criar_token(TOKEN_OPERADOR, "/"); 
-            }
-        }
-
-        // Operadores de Pontuação e Chaves
-        if (c == '%') return criar_token(TOKEN_OPERADOR, "%");
-        if (c == '(') return criar_token(TOKEN_ABRE_PARENTESES, "(");
-        if (c == ')') return criar_token(TOKEN_FECHA_PARENTESES, ")");
-        if (c == '{') return criar_token(TOKEN_ABRE_CHAVE, "{");
-        if (c == '}') return criar_token(TOKEN_FECHA_CHAVE, "}");
-        if (c == ';') return criar_token(TOKEN_PONTO_VIRGULA, ";");
-        if (c == ',') return criar_token(TOKEN_VIRGULA, ",");
-        
-        // Operadores que podem ter dois caracteres (==, !=, <=, >=)
-        if (c == '=') {
-            int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_IGUAL, "==");
-            ungetc(prox, arquivo);
-            return criar_token(TOKEN_ATRIBUICAO, "=");
-        }
-
-        if (c == '!') {
-            int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_DIFERENTE, "!=");
-            ungetc(prox, arquivo); // Se for só '!', o C vai dar erro depois, mas tratamos aqui
-        }
-
-        if (c == '<') {
-            int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_MENOR_IGUAL, "<=");
-            ungetc(prox, arquivo);
-            return criar_token(TOKEN_MENOR, "<");
-        }
-
-        if (c == '>') {
-            int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_MAIS_IGUAL, ">=");
-            ungetc(prox, arquivo);
-            return criar_token(TOKEN_MAIOR, ">");
-        }
-
-        if (c == '+') {
-            int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_MAIS_IGUAL, "+=");
-            ungetc(prox, arquivo);
-            return criar_token(TOKEN_OPERADOR, "+");
-        }
-
-        if (c == '-') {
-            int prox = fgetc(arquivo);
-            if (prox == '=') return criar_token(TOKEN_MENOS_IGUAL, "-=");
-            ungetc(prox, arquivo);
-            return criar_token(TOKEN_OPERADOR, "-");
-        }
-
-        if (c == '*') return criar_token(TOKEN_OPERADOR, "*");
-
-        // Strings
-        if (c == '"') {
-            char buffer[100]; int i = 0;
-            while ((c = fgetc(arquivo)) != '"' && c != EOF && i < 99) buffer[i++] = c;
-            buffer[i] = '\0';
-            return criar_token(TOKEN_CADEIA, buffer);
-        }
-
-        // Números
-        if (isdigit(c)) {
-            char buffer[100]; int i = 0;
-            buffer[i++] = c;
-            while ((isdigit(c = fgetc(arquivo)) || c == '.') && i < 99) buffer[i++] = c;
-            ungetc(c, arquivo);
-            buffer[i] = '\0';
-            return criar_token(TOKEN_VALOR, buffer);
-        }
-
-        // Identificadores e Palavras-Chave
-        if (isalpha(c) || c == '_') {
-            char buffer[100]; int i = 0;
-            buffer[i++] = c;
-            while ((isalnum(c = fgetc(arquivo)) || c == '_') && i < 99) buffer[i++] = c;
-            ungetc(c, arquivo);
-            buffer[i] = '\0';
-
-            if (strcmp(buffer, "inicio") == 0) return criar_token(TOKEN_INICIO, "inicio");
-            if (strcmp(buffer, "inteiro") == 0) return criar_token(TOKEN_INTEIRO, "inteiro");
-            if (strcmp(buffer, "real") == 0) return criar_token(TOKEN_REAL, "real");
-            if (strcmp(buffer, "funcao") == 0) return criar_token(TOKEN_FUNCAO, "funcao");
-            if (strcmp(buffer, "constante") == 0) return criar_token(TOKEN_CONSTANTE, "constante");
-            if (strcmp(buffer, "se") == 0) return criar_token(TOKEN_SE, "se");
-            if (strcmp(buffer, "senao") == 0) return criar_token(TOKEN_SENAO, "senao");
-            if (strcmp(buffer, "enquanto") == 0) return criar_token(TOKEN_ENQUANTO, "enquanto");
-            if (strcmp(buffer, "exibir") == 0) return criar_token(TOKEN_EXIBIR, "exibir");
-            if (strcmp(buffer, "ler") == 0) return criar_token(TOKEN_LER, "ler");
-            if (strcmp(buffer, "ligar") == 0) return criar_token(TOKEN_LIGAR, "ligar");
-            if (strcmp(buffer, "desligar") == 0) return criar_token(TOKEN_DESLIGAR, "desligar");
-            if (strcmp(buffer, "esperar") == 0) return criar_token(TOKEN_ESPERAR, "esperar");
-            if (strcmp(buffer, "retorne") == 0) return criar_token(TOKEN_RETORNE, "retorne");
-            if (strcmp(buffer, "para") == 0) return criar_token(TOKEN_PARA, "para"); 
-            if (strcmp(buffer, "e") == 0) return criar_token(TOKEN_E, "&&");
-            if (strcmp(buffer, "ou") == 0) return criar_token(TOKEN_OU, "||");
-            if (strcmp(buffer, "de") == 0) return criar_token(TOKEN_DE, "de");
-            if (strcmp(buffer, "ate") == 0) return criar_token(TOKEN_ATE, "ate");
-
-            return criar_token(TOKEN_IDENTIFICADOR, buffer);
-        }
+    while (isspace(c)) {
+        if (c == '\n') t.linha++;
+        c = fgetc(arquivo);
     }
-    return criar_token(TOKEN_FIM, "");
+
+    if (c == EOF) {
+        t.tipo = TOKEN_FIM;
+        strcpy(t.lexema, "EOF");
+        return t;
+    }
+
+    if (isalpha(c)) {
+        int i = 0;
+        while (isalnum(c) || c == '_') {
+            t.lexema[i++] = c;
+            c = fgetc(arquivo);
+        }
+        t.lexema[i] = '\0';
+        ungetc(c, arquivo);
+
+        if (strcmp(t.lexema, "inicio") == 0) t.tipo = TOKEN_INICIO;
+        else if (strcmp(t.lexema, "inteiro") == 0) t.tipo = TOKEN_INTEIRO;
+        else if (strcmp(t.lexema, "real") == 0) t.tipo = TOKEN_REAL;
+        else if (strcmp(t.lexema, "cadeia") == 0) t.tipo = TOKEN_CADEIA;
+        else if (strcmp(t.lexema, "exibir") == 0) t.tipo = TOKEN_EXIBIR;
+        else if (strcmp(t.lexema, "ler") == 0) t.tipo = TOKEN_LER;
+        else if (strcmp(t.lexema, "se") == 0) t.tipo = TOKEN_SE;
+        else if (strcmp(t.lexema, "senao") == 0) t.tipo = TOKEN_SENAO;
+        else if (strcmp(t.lexema, "enquanto") == 0) t.tipo = TOKEN_ENQUANTO;
+        else if (strcmp(t.lexema, "para") == 0) t.tipo = TOKEN_PARA;
+        else if (strcmp(t.lexema, "funcao") == 0) t.tipo = TOKEN_FUNCAO;
+        else if (strcmp(t.lexema, "retorne") == 0) t.tipo = TOKEN_RETORNE;
+        else if (strcmp(t.lexema, "registro") == 0) t.tipo = TOKEN_REGISTRO;
+        // Novos Operadores Lógicos em Maiúsculo
+        else if (strcmp(t.lexema, "E") == 0) t.tipo = TOKEN_E;
+        else if (strcmp(t.lexema, "OU") == 0) t.tipo = TOKEN_OU;
+        else if (strcmp(t.lexema, "NAO") == 0) t.tipo = TOKEN_NAO;
+        else t.tipo = TOKEN_IDENTIFICADOR;
+        
+        return t;
+    }
+
+    if (isdigit(c)) {
+        int i = 0;
+        while (isdigit(c) || c == '.') {
+            t.lexema[i++] = c;
+            c = fgetc(arquivo);
+        }
+        t.lexema[i] = '\0';
+        ungetc(c, arquivo);
+        t.tipo = TOKEN_NUMERO;
+        return t;
+    }
+
+    t.lexema[0] = c;
+    t.lexema[1] = '\0';
+    if (c == '=') t.tipo = TOKEN_ATRIBUICAO;
+    else if (c == ';') t.tipo = TOKEN_PONTO_VIRGULA;
+    else if (c == '(') t.tipo = TOKEN_ABRE_PARENTESES;
+    else if (c == ')') t.tipo = TOKEN_FECHA_PARENTESES;
+    else if (c == '{') t.tipo = TOKEN_ABRE_CHAVE;
+    else if (c == '}') t.tipo = TOKEN_FECHA_CHAVE;
+    else if (c == '[') t.tipo = TOKEN_ABRE_COLCHETE;
+    else if (c == ']') t.tipo = TOKEN_FECHA_COLCHETE;
+    else if (c == ',') t.tipo = TOKEN_VIRGULA;
+    else t.tipo = TOKEN_OPERADOR;
+
+    return t;
 }

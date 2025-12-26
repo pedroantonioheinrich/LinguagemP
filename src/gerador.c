@@ -1,66 +1,58 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include "gerador.h"
 #include "lexico.h"
 
-static FILE* saida_c;
+static FILE* saida;
 
 void gerador_abrir(const char* nome_arquivo) {
-    saida_c = fopen(nome_arquivo, "w");
-    if (!saida_c) {
-        perror("Erro ao abrir arquivo de saida");
+    saida = fopen(nome_arquivo, "w");
+    if (!saida) {
+        perror("Erro ao abrir arquivo de saída");
         exit(1);
     }
-    // Inclui bibliotecas padrão necessárias para o hardware simulado e IO
-    fprintf(saida_c, "#include <stdio.h>\n");
-    fprintf(saida_c, "#include <unistd.h>\n");
-    fprintf(saida_c, "#include <stdbool.h>\n\n");
 }
 
 void gerador_fechar() {
-    if (saida_c) {
-        fclose(saida_c);
+    if (saida) {
+        fclose(saida);
+        saida = NULL;
     }
 }
 
 void gerador_escrever(const char* texto) {
-    if (saida_c) {
-        fprintf(saida_c, "%s", texto);
+    if (saida) {
+        fprintf(saida, "%s", texto);
     }
 }
 
+// Esta função auxilia na tradução direta de expressões simples
 void gerador_traduzir_token(Token t) {
-    if (!saida_c) return;
+    if (!saida) return;
 
     switch (t.tipo) {
-        case TOKEN_INICIO:
-            // O sintatico agora cuida de escrever 'int main()', 
-            // mas deixamos aqui caso precise de um placeholder
-            break;
-
-        case TOKEN_VALOR:
         case TOKEN_IDENTIFICADOR:
-        case TOKEN_OPERADOR:
-            // Para operadores (+, -, %, <, ==) e valores, 
-            // escrevemos o lexema diretamente com espaços
-            fprintf(saida_c, " %s ", t.lexema);
+        case TOKEN_INTEIRO:
+        case TOKEN_REAL:
+            gerador_escrever(t.lexema);
             break;
-
         case TOKEN_CADEIA:
-            fprintf(saida_c, "\"%s\"", t.lexema);
+            gerador_escrever("\"");
+            gerador_escrever(t.lexema);
+            gerador_escrever("\"");
             break;
-
         case TOKEN_ATRIBUICAO:
-            fprintf(saida_c, " = ");
+            gerador_escrever(" = ");
             break;
-
-        case TOKEN_PONTO_VIRGULA:
-            fprintf(saida_c, ";\n");
+        case TOKEN_IGUAL:
+            gerador_escrever(" == ");
             break;
-
+        case TOKEN_OPERADOR:
+            gerador_escrever(t.lexema);
+            break;
         default:
-            // Outros tokens são ignorados ou tratados pelo sintatico
+            // Outros tokens são tratados diretamente pelo sintático
             break;
     }
 }

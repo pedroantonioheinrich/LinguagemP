@@ -1,78 +1,131 @@
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 #include "lexico.h"
 
+int linha_atual = 1;
+
 Token proximo_token(FILE* arquivo) {
+    int c;
     Token t;
-    int c = fgetc(arquivo);
-
-    while (isspace(c)) {
-        if (c == '\n') t.linha++;
+    
+    // 1. Pular espaços, novas linhas e comentários
+    while (1) {
         c = fgetc(arquivo);
+        if (c == EOF) {
+            t.tipo = TOKEN_FIM;
+            strcpy(t.lexema, "EOF");
+            t.linha = linha_atual;
+            return t;
+        }
+
+        if (isspace(c)) {
+            if (c == '\n') linha_atual++;
+            continue;
+        }
+
+        if (c == '/') {
+            int proximo = fgetc(arquivo);
+            if (proximo == '/') {
+                while ((c = fgetc(arquivo)) != '\n' && c != EOF);
+                if (c == '\n') linha_atual++;
+                continue; 
+            } else {
+                ungetc(proximo, arquivo);
+            }
+        }
+        break;
     }
 
-    if (c == EOF) {
-        t.tipo = TOKEN_FIM;
-        strcpy(t.lexema, "EOF");
-        return t;
-    }
+    t.linha = linha_atual;
+    memset(t.lexema, 0, 100);
+    int i = 0;
 
-    if (isalpha(c)) {
-        int i = 0;
+    // 2. Identificadores e Palavras-reservadas
+    if (isalpha(c) || c == '_') {
         while (isalnum(c) || c == '_') {
-            t.lexema[i++] = c;
+            if (i < 99) t.lexema[i++] = c;
             c = fgetc(arquivo);
         }
-        t.lexema[i] = '\0';
         ungetc(c, arquivo);
-
-        if (strcmp(t.lexema, "inicio") == 0) t.tipo = TOKEN_INICIO;
-        else if (strcmp(t.lexema, "inteiro") == 0) t.tipo = TOKEN_INTEIRO;
+        
+        if (strcmp(t.lexema, "inteiro") == 0) t.tipo = TOKEN_INTEIRO;
         else if (strcmp(t.lexema, "real") == 0) t.tipo = TOKEN_REAL;
         else if (strcmp(t.lexema, "cadeia") == 0) t.tipo = TOKEN_CADEIA;
-        else if (strcmp(t.lexema, "exibir") == 0) t.tipo = TOKEN_EXIBIR;
-        else if (strcmp(t.lexema, "ler") == 0) t.tipo = TOKEN_LER;
         else if (strcmp(t.lexema, "se") == 0) t.tipo = TOKEN_SE;
         else if (strcmp(t.lexema, "senao") == 0) t.tipo = TOKEN_SENAO;
-        else if (strcmp(t.lexema, "enquanto") == 0) t.tipo = TOKEN_ENQUANTO;
+        else if (strcmp(t.lexema, "enquanto") == 0) t.tipo = TOKEN_ENQUANTO; // Adicionado
         else if (strcmp(t.lexema, "para") == 0) t.tipo = TOKEN_PARA;
+        else if (strcmp(t.lexema, "de") == 0) t.tipo = TOKEN_DE;
+        else if (strcmp(t.lexema, "ate") == 0) t.tipo = TOKEN_ATE;
+        else if (strcmp(t.lexema, "exibir") == 0) t.tipo = TOKEN_EXIBIR;
+        else if (strcmp(t.lexema, "leia") == 0) t.tipo = TOKEN_LEIA;
         else if (strcmp(t.lexema, "funcao") == 0) t.tipo = TOKEN_FUNCAO;
-        else if (strcmp(t.lexema, "retorne") == 0) t.tipo = TOKEN_RETORNE;
+        else if (strcmp(t.lexema, "retorno") == 0) t.tipo = TOKEN_RETORNO;   // Adicionado
         else if (strcmp(t.lexema, "registro") == 0) t.tipo = TOKEN_REGISTRO;
-        // Novos Operadores Lógicos em Maiúsculo
-        else if (strcmp(t.lexema, "E") == 0) t.tipo = TOKEN_E;
-        else if (strcmp(t.lexema, "OU") == 0) t.tipo = TOKEN_OU;
-        else if (strcmp(t.lexema, "NAO") == 0) t.tipo = TOKEN_NAO;
+        else if (strcmp(t.lexema, "inicio") == 0) t.tipo = TOKEN_INICIO;
         else t.tipo = TOKEN_IDENTIFICADOR;
-        
         return t;
     }
 
+    // 3. Números (Inteiros e Reais)
     if (isdigit(c)) {
-        int i = 0;
+        int eh_real = 0;
         while (isdigit(c) || c == '.') {
-            t.lexema[i++] = c;
+            if (c == '.') eh_real = 1;
+            if (i < 99) t.lexema[i++] = c;
             c = fgetc(arquivo);
         }
-        t.lexema[i] = '\0';
         ungetc(c, arquivo);
-        t.tipo = TOKEN_NUMERO;
+        t.tipo = eh_real ? TOKEN_VALOR_REAL : TOKEN_VALOR_INTEIRO;
         return t;
     }
 
-    t.lexema[0] = c;
-    t.lexema[1] = '\0';
-    if (c == '=') t.tipo = TOKEN_ATRIBUICAO;
-    else if (c == ';') t.tipo = TOKEN_PONTO_VIRGULA;
-    else if (c == '(') t.tipo = TOKEN_ABRE_PARENTESES;
-    else if (c == ')') t.tipo = TOKEN_FECHA_PARENTESES;
-    else if (c == '{') t.tipo = TOKEN_ABRE_CHAVE;
-    else if (c == '}') t.tipo = TOKEN_FECHA_CHAVE;
-    else if (c == '[') t.tipo = TOKEN_ABRE_COLCHETE;
-    else if (c == ']') t.tipo = TOKEN_FECHA_COLCHETE;
-    else if (c == ',') t.tipo = TOKEN_VIRGULA;
-    else t.tipo = TOKEN_OPERADOR;
+    // 4. Strings (Cadeias Literais)
+    if (c == '"') {
+        t.lexema[i++] = c;
+        while ((c = fgetc(arquivo)) != '"' && c != EOF) {
+            if (i < 98) t.lexema[i++] = c;
+        }
+        t.lexema[i++] = '"';
+        t.lexema[i] = '\0';
+        t.tipo = TOKEN_CADEIA;
+        return t;
+    }
 
+    // 5. Símbolos e Operadores
+    t.lexema[0] = c;
+    t.lexema[1] = '\0'; // Garante terminação para símbolos simples
+    
+    switch (c) {
+        case '=': 
+            c = fgetc(arquivo);
+            if (c == '=') { strcpy(t.lexema, "=="); t.tipo = TOKEN_OPERADOR; }
+            else { ungetc(c, arquivo); t.tipo = TOKEN_ATRIBUICAO; }
+            break;
+        case '+': case '-': case '*': case '/':
+        case '>': case '<': case '!':
+            {
+                int prox = fgetc(arquivo);
+                if (prox == '=') { 
+                    t.lexema[1] = prox; 
+                    t.lexema[2] = '\0'; 
+                } else {
+                    ungetc(prox, arquivo);
+                }
+                t.tipo = TOKEN_OPERADOR;
+            }
+            break;
+        case ';': t.tipo = TOKEN_PONTO_VIRGULA; break;
+        case '(': t.tipo = TOKEN_ABRE_PARENTESES; break;
+        case ')': t.tipo = TOKEN_FECHA_PARENTESES; break;
+        case '{': t.tipo = TOKEN_ABRE_CHAVE; break;
+        case '}': t.tipo = TOKEN_FECHA_CHAVE; break;
+        case '[': t.tipo = TOKEN_ABRE_COLCHETE; break; // Adicionado
+        case ']': t.tipo = TOKEN_FECHA_COLCHETE; break; // Adicionado
+        case ',': t.tipo = TOKEN_VIRGULA; break;
+        case '.': t.tipo = TOKEN_PONTO; break;
+        default: t.tipo = TOKEN_ERRO; break;
+    }
     return t;
 }

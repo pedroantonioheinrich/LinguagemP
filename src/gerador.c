@@ -1,58 +1,33 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include "gerador.h"
-#include "lexico.h"
 
-static FILE* saida;
+static FILE* arquivo_saida;
+static int ultimo_foi_g = 0;
 
 void gerador_abrir(const char* nome_arquivo) {
-    saida = fopen(nome_arquivo, "w");
-    if (!saida) {
-        perror("Erro ao abrir arquivo de saída");
-        exit(1);
-    }
-}
-
-void gerador_fechar() {
-    if (saida) {
-        fclose(saida);
-        saida = NULL;
-    }
+    arquivo_saida = fopen(nome_arquivo, "w");
 }
 
 void gerador_escrever(const char* texto) {
-    if (saida) {
-        fprintf(saida, "%s", texto);
+    if (arquivo_saida) {
+        fprintf(arquivo_saida, "%s", texto);
+        if (strstr(texto, "printf(\"%g\\n\"") != NULL) {
+            ultimo_foi_g = 1;
+        } else if (strcmp(texto, ";\n    ") == 0) {
+            // Se terminamos um comando, resetamos o estado
+        }
     }
 }
 
-// Esta função auxilia na tradução direta de expressões simples
-void gerador_traduzir_token(Token t) {
-    if (!saida) return;
+int gerador_ultimo_foi_g() {
+    int status = ultimo_foi_g;
+    ultimo_foi_g = 0; 
+    return status;
+}
 
-    switch (t.tipo) {
-        case TOKEN_IDENTIFICADOR:
-        case TOKEN_INTEIRO:
-        case TOKEN_REAL:
-            gerador_escrever(t.lexema);
-            break;
-        case TOKEN_CADEIA:
-            gerador_escrever("\"");
-            gerador_escrever(t.lexema);
-            gerador_escrever("\"");
-            break;
-        case TOKEN_ATRIBUICAO:
-            gerador_escrever(" = ");
-            break;
-        case TOKEN_IGUAL:
-            gerador_escrever(" == ");
-            break;
-        case TOKEN_OPERADOR:
-            gerador_escrever(t.lexema);
-            break;
-        default:
-            // Outros tokens são tratados diretamente pelo sintático
-            break;
+void gerador_fechar() {
+    if (arquivo_saida) {
+        fclose(arquivo_saida);
     }
 }

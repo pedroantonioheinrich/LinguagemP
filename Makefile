@@ -16,7 +16,7 @@ run: lp_compilador
 
 
 	
-	./lp_compilador exemplos/super_teste_v28.lp
+	./lp_compilador exemplos/testev31.lp
 	mv codigo_gerado.c programa_final.c
 	# Compila o programa final
 	$(CC) programa_final.c -o meu_programa_p

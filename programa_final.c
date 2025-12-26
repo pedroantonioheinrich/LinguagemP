@@ -3,44 +3,36 @@
 #include <stdlib.h>
 
 typedef struct {
-    char nome[256];
-    float preco;
-} Produto;
+    int status;
+    int erro_critico;
+} Sistema;
 
-float aplicar_desconto(float  valor , float  taxa ) {
-    return valor * ( 1.0 - taxa ) ;
-    }
-    
 int main() {
      {
-    int notas[3];
-    notas[0] = 10 ;
-    notas[1] = 8 ;
-    notas[2] = 9 ;
-    printf("%s\n", "--- TESTE 1: VETORES ---" );
-    printf("%s\n", "Nota 1:" );
-    printf("%g\n", (double)(notas [ 0 ] ));
-    Produto p1;
-    strcpy(p1.nome, "Monitor");
-    p1.preco = 1200.0 ;
-    printf("%s\n", "--- TESTE 2: REGISTROS E FUNCOES ---" );
-    printf("%s\n", "Produto:" );
-    printf("%s\n", p1 . nome );
-    printf("%s\n", "Preco original:" );
-    printf("%g\n", (double)(p1 . preco ));
-    float preco_final;
-    preco_final = aplicar_desconto ( p1 . preco , 0.10 ) ;
-    printf("%s\n", "Preco com 10% de desconto:" );
-    printf("%g\n", (double)(preco_final ));
-    printf("%s\n", "--- TESTE 3: LOOP COM VETOR ---" );
-    int i;
-    i = 0 ;
-    while (i < 3 )  {
-    printf("%s\n", "Lendo nota do indice:" );
-    printf("%g\n", (double)(i ));
-    printf("%g\n", (double)(notas [ i ] ));
-    i = i + 1 ;
+    int matriz[2][2];
+    Sistema sys;
+    int x;
+    sys.status = 1 ;
+    sys.erro_critico = 0 ;
+    matriz[0][0] = 10 ;
+    matriz[1][1] = 20 ;
+    x = 50 ;
+    printf("%s\n", "--- Iniciando Suite de Testes V31.0 ---" );
+    if (! ( sys . erro_critico == 1 ) )  {
+    printf("%s\n", "Teste 1: Sucesso - Negação de igualdade" );
     }
+    if (! ( sys . status == 0 ) && x > 40 )  {
+    printf("%s\n", "Teste 2: Sucesso - NAO combinado com E" );
+    }
+    if (! ( matriz [ 0 ] [ 0 ] == 0 ) || matriz [ 1 ] [ 1 ] == 100 )  {
+    printf("%s\n", "Teste 3: Sucesso - Matriz validada com negação" );
+    }
+    printf("%s\n", "Resultado logico complexo (deve ser 1):" );
+    printf("%g\n", (double)(! ( x < 10 ) && ( sys . status == 1 ) ));
+    if (! ( sys . erro_critico == 1 || x == 0 ) )  {
+    printf("%s\n", "Teste 5: Sucesso - Seguranca validada (NAO OU)" );
+    }
+    printf("%s\n", "--- Fim dos Testes V31.0 ---" );
     }
     
     return 0;

@@ -53,14 +53,32 @@ void consumir(TipoToken tipo, const char* msg) {
     }
 }
 
+/**
+ * Traduz expressões da Linguagem P para C.
+ * ATUALIZADO V31.0: Suporte a 'e' (&&), 'ou' (||) e 'nao' (!).
+ */
 void copiar_expressao_ate(TipoToken limitador) {
     int nivel_p = 0;
+    int nivel_c = 0; 
     while(token_atual.tipo != TOKEN_FIM) {
-        if (token_atual.tipo == limitador && nivel_p == 0) break;
+        if (token_atual.tipo == limitador && nivel_p == 0 && nivel_c == 0) break;
+        
         if (token_atual.tipo == TOKEN_ABRE_PARENTESES) nivel_p++;
         else if (token_atual.tipo == TOKEN_FECHA_PARENTESES) nivel_p--;
+        else if (token_atual.tipo == TOKEN_ABRE_COLCHETE) nivel_c++;
+        else if (token_atual.tipo == TOKEN_FECHA_COLCHETE) nivel_c--;
 
-        gerador_escrever(token_atual.lexema);
+        // Tradução de Operadores Lógicos para C
+        if (token_atual.tipo == TOKEN_E) {
+            gerador_escrever("&&");
+        } else if (token_atual.tipo == TOKEN_OU) {
+            gerador_escrever("||");
+        } else if (token_atual.tipo == TOKEN_NAO) {
+            gerador_escrever("!");
+        } else {
+            gerador_escrever(token_atual.lexema);
+        }
+        
         gerador_escrever(" ");
         proximo();
     }
@@ -71,18 +89,15 @@ void copiar_expressao_ate(TipoToken limitador) {
 void declaracao_funcao() {
     consumir(TOKEN_FUNCAO, "funcao");
     
-    // Tradução do tipo de retorno para C
     if (token_atual.tipo == TOKEN_INTEIRO) gerador_escrever("int ");
     else if (token_atual.tipo == TOKEN_REAL) gerador_escrever("float ");
     else if (token_atual.tipo == TOKEN_CADEIA) gerador_escrever("char* ");
     else gerador_escrever("void ");
     proximo();
 
-    // Nome da função
     gerador_escrever(token_atual.lexema);
     proximo();
 
-    // Tradução dos Parâmetros (Linguagem P -> C)
     consumir(TOKEN_ABRE_PARENTESES, "(");
     gerador_escrever("(");
     while(token_atual.tipo != TOKEN_FECHA_PARENTESES && token_atual.tipo != TOKEN_FIM) {
@@ -106,7 +121,7 @@ void declaracao_variavel() {
     char nome_var[100];
     char tipo_reg_nome[100] = "";
     
-    if (t == TOKEN_IDENTIFICADOR) { // Registros
+    if (t == TOKEN_IDENTIFICADOR) { 
         strcpy(tipo_reg_nome, token_atual.lexema);
         gerador_escrever(tipo_reg_nome); gerador_escrever(" "); 
         proximo();
@@ -115,7 +130,7 @@ void declaracao_variavel() {
         gerador_escrever(nome_var); 
         proximo();
     } 
-    else { // Primitivos
+    else { 
         if (t == TOKEN_CADEIA) gerador_escrever("char ");
         else if (t == TOKEN_INTEIRO) gerador_escrever("int ");
         else if (t == TOKEN_REAL) gerador_escrever("float ");
@@ -126,13 +141,16 @@ void declaracao_variavel() {
         gerador_escrever(nome_var); 
         proximo();
         
-        // Suporte a Vetores (ex: inteiro notas[10])
-        if (token_atual.tipo == TOKEN_ABRE_COLCHETE) {
-            gerador_escrever("["); proximo();
-            gerador_escrever(token_atual.lexema); proximo();
+        while (token_atual.tipo == TOKEN_ABRE_COLCHETE) {
+            gerador_escrever("["); 
+            proximo();
+            gerador_escrever(token_atual.lexema); 
+            proximo();
             consumir(TOKEN_FECHA_COLCHETE, "]");
             gerador_escrever("]");
-        } else if (t == TOKEN_CADEIA) {
+        }
+        
+        if (t == TOKEN_CADEIA && token_atual.tipo != TOKEN_ABRE_COLCHETE) {
             gerador_escrever("[256]"); 
         }
     }
@@ -195,8 +213,14 @@ void comando() {
             if (token_atual.tipo == TOKEN_FECHA_PARENTESES && nivel_p == 0) break;
             if (token_atual.tipo == TOKEN_ABRE_PARENTESES) nivel_p++;
             else if (token_atual.tipo == TOKEN_FECHA_PARENTESES) nivel_p--;
-            if (token_atual.lexema[0] == '"' || semantico_obter_tipo(token_atual.lexema) == TOKEN_CADEIA || strstr(token_atual.lexema, "nome")) eh_str = 1;
-            strcat(expressao, token_atual.lexema); strcat(expressao, " ");
+            
+            if (token_atual.lexema[0] == '"' || semantico_obter_tipo(token_atual.lexema) == TOKEN_CADEIA) eh_str = 1;
+            
+            // Suporte a 'e'/'ou'/'nao' dentro do exibir
+            if (token_atual.tipo == TOKEN_E) strcat(expressao, "&& ");
+            else if (token_atual.tipo == TOKEN_OU) strcat(expressao, "|| ");
+            else if (token_atual.tipo == TOKEN_NAO) strcat(expressao, "! ");
+            else { strcat(expressao, token_atual.lexema); strcat(expressao, " "); }
             proximo();
         }
         if (eh_str) { gerador_escrever("printf(\"%s\\n\", "); gerador_escrever(expressao); gerador_escrever(")"); }
@@ -211,21 +235,19 @@ void comando() {
         consumir(TOKEN_PONTO_VIRGULA, ";");
     }
     else if (token_atual.tipo == TOKEN_IDENTIFICADOR) {
-        char n1[200]; strcpy(n1, token_atual.lexema);
+        char n1[512]; strcpy(n1, token_atual.lexema);
         if (semantico_existe_registro(n1) && espiar().tipo == TOKEN_IDENTIFICADOR) {
             declaracao_variavel(); return;
         }
         proximo();
         
-        // Suporte a acesso de Vetor na Atribuição (ex: notas[0] = 10)
-        if (token_atual.tipo == TOKEN_ABRE_COLCHETE) {
+        while (token_atual.tipo == TOKEN_ABRE_COLCHETE) {
             strcat(n1, "["); proximo();
             strcat(n1, token_atual.lexema); proximo();
             consumir(TOKEN_FECHA_COLCHETE, "]");
             strcat(n1, "]");
         }
         
-        // Acesso a membros de registro
         while (token_atual.tipo == TOKEN_PONTO) {
             strcat(n1, "."); proximo();
             strcat(n1, token_atual.lexema); proximo();
@@ -279,7 +301,7 @@ void declaracao_registro() {
         proximo(); 
         char campo[100]; strcpy(campo, token_atual.lexema);
         gerador_escrever(campo);
-        if (tipo_campo == TOKEN_CADEIA || strstr(campo, "nome")) gerador_escrever("[256]");
+        if (tipo_campo == TOKEN_CADEIA) gerador_escrever("[256]");
         gerador_escrever(";\n"); 
         proximo();
         if (token_atual.tipo == TOKEN_PONTO_VIRGULA) proximo();
@@ -310,5 +332,5 @@ void analisar(FILE* arquivo) {
         else proximo();
     }
     gerador_fechar();
-    P_LOG_INFO("V28.0: Integrado suporte a Funcoes, Vetores e Registros.");
+    P_LOG_INFO("V31.0: Suporte completo a logica booleana (e, ou, nao) e Matrizes.");
 }

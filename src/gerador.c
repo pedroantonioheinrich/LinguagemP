@@ -32,6 +32,7 @@ void gerador_escrever(const char* texto) {
         fflush(arquivo_saida);
 
         // Verifica se o último formato de exibição foi um real (%g)
+        // Isso ajuda os tradutores a saberem se precisam tratar vírgula/ponto
         if (strstr(texto, "%g") != NULL) {
             ultimo_foi_g = 1;
         } else if (strchr(texto, ';') != NULL || strchr(texto, '}') != NULL) {

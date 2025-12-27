@@ -66,7 +66,10 @@ void traduzir_expressao_ate(TipoToken limitador) {
                 break;
 
             case TOKEN_VALOR_CADEIA:
-                traduzir_literal_cadeia(token_atual.lexema);
+                // Aqui garantimos que a string vá com aspas para o C
+                gerador_escrever("\"");
+                gerador_escrever(token_atual.lexema);
+                gerador_escrever("\"");
                 proximo();
                 break;
 

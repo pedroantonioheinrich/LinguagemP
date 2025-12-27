@@ -1,5 +1,17 @@
+# Executáveis
+lp
+compilador_p
+temp_exec
+temp_exec.exe
+*.out
+
+# Objetos e Temporários
+obj/
+bin/
 *.o
-lp_compilador
-meu_programa_p
 codigo_gerado.c
+
+# Logs e IDEs
+*.log
 .vscode/
+.DS_Store

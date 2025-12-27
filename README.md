@@ -220,3 +220,98 @@ Este documento serve como a especificação oficial da versão 1.0 da Linguagem 
 
 ---
 
+## 🛠 Instalação
+
+A Linguagem P pode ser instalada em sistemas Linux, macOS e Windows. Escolha o método mais adequado para você.
+
+### 🌍 Instalação Automática (Linux e macOS)
+
+Este é o método mais rápido para usuários em qualquer lugar do mundo. Ele baixa o script diretamente do GitHub e configura o comando `lp` automaticamente.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/pedroantonioheinrich/LinguagemP/refs/heads/main/install-p.sh | bash
+
+```
+
+### 🐧 Instalação Manual (Linux)
+
+Se você já clonou o repositório, pode usar o instalador local:
+
+1. Dê permissão de execução:
+```bash
+chmod +x instalar.sh
+
+```
+
+
+2. Execute o instalador:
+```bash
+./instalar.sh
+
+```
+
+
+
+### 🪟 Instalação no Windows
+
+Para usuários Windows, utilize o script PowerShell:
+
+1. Abra o PowerShell na pasta do projeto.
+2. Caso os scripts estejam bloqueados, execute: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`.
+3. Execute o instalador:
+```powershell
+.\instalar.ps1
+
+```
+
+
+4. **Reinicie o terminal** para que o comando `lp` seja reconhecido.
+
+---
+
+## 🚀 Como Usar
+
+Após a instalação, você terá o comando `lp` disponível globalmente.
+
+### Compilar e Rodar Imediatamente
+
+O modo mais simples de usar a Linguagem P é o modo de execução direta (`-r`). Ele traduz seu código, compila e executa, limpando os arquivos temporários automaticamente:
+
+```bash
+lp -r seu_arquivo.lp
+
+```
+
+### Apenas Traduzir para C
+
+Se você deseja ver o código C gerado sem executá-lo:
+
+```bash
+lp -c seu_arquivo.lp
+
+```
+
+Isso gerará o arquivo `codigo_gerado.c` na sua pasta atual.
+
+---
+
+## 📝 Exemplo de Teste Rápido
+
+Crie um arquivo chamado `teste.lp` e cole o código abaixo:
+
+```p
+inicio() {
+    exibir("Ola mundo! A Linguagem P esta funcionando.");
+}
+
+```
+
+Execute com:
+
+```bash
+lp -r teste.lp
+
+```
+
+---
+

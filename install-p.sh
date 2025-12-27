@@ -1,7 +1,7 @@
 #!/bin/bash
 # install-p.sh - Instalador Remoto da Linguagem P
 
-REPO_URL="https://raw.githubusercontent.com/pedroantonioheinrich/LinguagemP/main"
+REPO_URL="https://raw.githubusercontent.com/pedroantonioheinrich/LinguagemP/refs/heads/main/install-p.sh"
 
 echo "🌍 Baixando Linguagem P do repositório oficial..."
 

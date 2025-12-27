@@ -17,7 +17,7 @@ Para instalar a Linguagem P em qualquer lugar do mundo e configurar o comando `l
 
 ### Linux e macOS
 ```bash
-curl -fsSL [https://raw.githubusercontent.com/pedroantonioheinrich/LinguagemP/refs/heads/main/install-p.sh](https://raw.githubusercontent.com/pedroantonioheinrich/LinguagemP/refs/heads/main/install-p.sh) | bash
+curl -fsSL https://raw.githubusercontent.com/pedroantonioheinrich/LinguagemP/main/install-p.sh | bash
 
 ```
 

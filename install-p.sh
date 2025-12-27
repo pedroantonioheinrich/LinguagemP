@@ -48,10 +48,31 @@ gcc -o lp *.o
 echo "📂 Configurando comando 'lp' no sistema..."
 sudo mv lp /usr/local/bin/lp
 
+# --- NOVIDADE: INSTALAÇÃO DAS INSTRUÇÕES ---
+echo "📖 Configurando guia de comandos local..."
+DOC_DIR="$HOME/.linguagemp"
+mkdir -p "$DOC_DIR"
+
+# Baixa o arquivo de instruções do seu repo (Certifique-se que ele existe no GitHub)
+curl -sSL "$REPO_URL/INSTRUCOES.md" -o "$DOC_DIR/INSTRUCOES.md"
+
+# Cria um alias para o usuário acessar as instruções de qualquer lugar
+# Adiciona ao .bashrc e .zshrc se eles existirem
+if [ -f "$HOME/.bashrc" ]; then
+    sed -i '/alias lp-ajuda/d' "$HOME/.bashrc" # Evita duplicatas
+    echo "alias lp-ajuda='cat $DOC_DIR/INSTRUCOES.md'" >> "$HOME/.bashrc"
+fi
+if [ -f "$HOME/.zshrc" ]; then
+    sed -i '/alias lp-ajuda/d' "$HOME/.zshrc"
+    echo "alias lp-ajuda='cat $DOC_DIR/INSTRUCOES.md'" >> "$HOME/.zshrc"
+fi
+# -------------------------------------------
+
 # Limpeza
 cd .. && rm -rf temp_lp_install
 
 echo "------------------------------------------------"
 echo "✅ Linguagem P instalada com sucesso!"
 echo "Teste agora com: lp -h"
+echo "Para ver o guia de comandos, digite: lp-ajuda"
 echo "------------------------------------------------"

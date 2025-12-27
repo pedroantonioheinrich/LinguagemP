@@ -9,8 +9,9 @@ CFLAGS = -Wall -Wextra -g -Iinclude
 SRC_DIR = src
 OBJ_DIR = obj
 TEST_DIR = tests
+GEN_DIR = $(TEST_DIR)/gerados
 
-# Lista de fontes atualizada com tradutor_funcao.c
+# Lista de fontes completa
 SRCS = $(SRC_DIR)/principal.c \
        $(SRC_DIR)/lexico.c \
        $(SRC_DIR)/logs.c \
@@ -37,13 +38,18 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# --- LOOP DE TESTES COM EXIBIÇÃO DE ERRO ---
+# --- LOOP DE TESTES COM ORGANIZAÇÃO DE ARQUIVOS .C ---
 test_all: $(TARGET)
+	@mkdir -p $(GEN_DIR)
 	@echo "Iniciando bateria de testes em $(TEST_DIR)/..."
 	@for file in $(shell ls $(TEST_DIR)/*.lp 2>/dev/null); do \
+		base_name=$$(basename $$file .lp); \
 		./$(TARGET) $$file > /dev/null 2>&1; \
 		if [ $$? -eq 0 ]; then \
 			echo "Testando $$file... ✅ OK"; \
+			if [ -f codigo_gerado.c ]; then \
+				mv codigo_gerado.c $(GEN_DIR)/$$base_name.c; \
+			fi \
 		else \
 			echo "Testando $$file... ❌ ERRO ENCONTRADO!"; \
 			echo "------------------------------------------------"; \
@@ -57,6 +63,7 @@ test_all: $(TARGET)
 
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET) codigo_gerado.c *.log
-	@echo "Limpeza concluída."
+	rm -rf $(GEN_DIR)
+	@echo "Limpeza concluída. Pasta $(GEN_DIR) removida."
 
 .PHONY: clean test_all

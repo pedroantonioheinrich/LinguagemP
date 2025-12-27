@@ -10,17 +10,21 @@ typedef enum {
     TOKEN_INTEIRO,
     TOKEN_REAL,
     TOKEN_CADEIA,
-    TOKEN_LOGICO,      // Novo: tipo booleano
+    TOKEN_LOGICO,
     TOKEN_VAZIO,
     TOKEN_SE,
     TOKEN_SENAO,
     TOKEN_ENQUANTO,
+    TOKEN_PARA,
+    TOKEN_DE,           // Adicionado para: para (i de 1 ate 10)
+    TOKEN_ATE,          // Adicionado para: para (i de 1 ate 10)
     TOKEN_RETORNO,
     TOKEN_FUNCAO,
     TOKEN_REGISTRO,
     TOKEN_EXIBIR,
-    TOKEN_VERDADEIRO,  // Novo: literal true
-    TOKEN_FALSO,       // Novo: literal false
+    TOKEN_LER,
+    TOKEN_VERDADEIRO,
+    TOKEN_FALSO,
 
     // Operadores e Pontuação
     TOKEN_ATRIBUICAO,       // =
@@ -28,9 +32,12 @@ typedef enum {
     TOKEN_MENOS,            // -
     TOKEN_ASTERISCO,        // *
     TOKEN_BARRA,            // /
+    TOKEN_PERCENTUAL,       // % (Adicionado para teste 28.lp)
+    TOKEN_MAIS_MAIS,        // ++ 
+    TOKEN_MENOS_MENOS,      // -- (Adicionado para testes 1.lp, 48.lp)
     TOKEN_E_COMERCIAL,      // &
     TOKEN_PONTO,            // .
-    TOKEN_SETA,             // -> (Adicionado para açúcar sintático de ponteiros)
+    TOKEN_SETA,             // ->
     TOKEN_VIRGULA,          // ,
     TOKEN_PONTO_VIRGULA,    // ;
     TOKEN_ABRE_PARENTESES,  // (
@@ -47,9 +54,9 @@ typedef enum {
     TOKEN_MAIOR,            // >
     TOKEN_MENOR_IGUAL,      // <=
     TOKEN_MAIOR_IGUAL,      // >=
-    TOKEN_E_LOGICO,         // "e"
-    TOKEN_OU_LOGICO,        // "ou"
-    TOKEN_NAO_LOGICO,       // "nao"
+    TOKEN_E_LOGICO,         // "e" ou "&&"
+    TOKEN_OU_LOGICO,        // "ou" ou "||"
+    TOKEN_NAO_LOGICO,       // "nao" ou "!"
 
     // Literais e Identificadores
     TOKEN_IDENTIFICADOR,
@@ -70,15 +77,7 @@ typedef struct {
 
 // --- PROTÓTIPOS ---
 
-/**
- * Obtém o próximo token do arquivo fonte.
- */
 Token proximo_token(FILE* arquivo);
-
-/**
- * Converte o enum TipoToken para uma representação em string.
- * Útil para logs, depuração e verificação de tipos no sintático.
- */
 const char* tipo_token_para_string(TipoToken tipo);
 
 #endif

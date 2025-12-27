@@ -13,6 +13,12 @@ void gerador_abrir(const char* nome_arquivo);
 void gerador_escrever(const char* texto);
 
 /**
+ * Escreve texto formatado (estilo printf) no arquivo de saída.
+ * Essencial para declarações complexas como vetores e registros.
+ */
+void gerador_escrever_formatado(const char* formato, ...);
+
+/**
  * Fecha o arquivo de saída e limpa os buffers.
  */
 void gerador_fechar();

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "gerador.h"
 #include "logs.h"
 
@@ -28,8 +29,6 @@ void gerador_escrever(const char* texto) {
         fprintf(arquivo_saida, "%s", texto);
         
         // FORÇAMOS a descarga do buffer para o disco imediatamente.
-        // Isso é vital para garantir que, se o compilador der crash no sintatico,
-        // o que já foi traduzido (como o nome da variável antes da seta) esteja no arquivo.
         fflush(arquivo_saida);
 
         // Verifica se o último formato de exibição foi um real (%g)
@@ -42,10 +41,25 @@ void gerador_escrever(const char* texto) {
     }
 }
 
+/**
+ * Nova função para suportar escritas formatadas (estilo printf)
+ * Útil para declarações de vetores e tipos complexos.
+ */
+void gerador_escrever_formatado(const char* formato, ...) {
+    if (arquivo_saida && formato) {
+        va_list args;
+        va_start(args, formato);
+        
+        // Escrita formatada direto no arquivo
+        vfprintf(arquivo_saida, formato, args);
+        
+        va_end(args);
+        fflush(arquivo_saida);
+    }
+}
+
 int gerador_ultimo_foi_g() {
-    int status = ultimo_foi_g;
-    // Opcional: o reset já pode ser tratado na lógica de escrita para maior controle
-    return status;
+    return ultimo_foi_g;
 }
 
 void gerador_fechar() {

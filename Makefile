@@ -1,53 +1,62 @@
-# Configurações do Compilador
+# ==========================================
+# MAKEFILE - COMPILADOR LINGUAGEM P
+# ==========================================
+
+TARGET = compilador_p
 CC = gcc
-CFLAGS = -Wall -Wextra -g -DDEBUG
-TARGET = lp_compilador
+CFLAGS = -Wall -Wextra -g -Iinclude
 
-# Caminhos e Arquivos
 SRC_DIR = src
-SRC = $(wildcard $(SRC_DIR)/*.c)
-OBJ = $(SRC:.c=.o)
+OBJ_DIR = obj
+TEST_DIR = tests
 
-# Cores para o terminal
-BLUE = \033[1;34m
-RESET = \033[0m
+# Lista de fontes atualizada com tradutor_funcao.c
+SRCS = $(SRC_DIR)/principal.c \
+       $(SRC_DIR)/lexico.c \
+       $(SRC_DIR)/logs.c \
+       $(SRC_DIR)/sintatico.c \
+       $(SRC_DIR)/semantico.c \
+       $(SRC_DIR)/gerador.c \
+       $(SRC_DIR)/formatador_c.c \
+       $(SRC_DIR)/tradutor_string.c \
+       $(SRC_DIR)/tradutor_expressao.c \
+       $(SRC_DIR)/tradutor_variavel.c \
+       $(SRC_DIR)/tradutor_fluxo.c \
+       $(SRC_DIR)/tradutor_registro.c \
+       $(SRC_DIR)/tradutor_funcao.c
 
-.PHONY: all audit run clean
+OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
-# Regra principal
-all: $(TARGET)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+	@echo "------------------------------------------------"
+	@echo "Executável '$(TARGET)' gerado com sucesso."
+	@echo "------------------------------------------------"
 
-$(TARGET): $(OBJ)
-	@echo "$(BLUE)--- Vinculando Objetos ---$(RESET)"
-	$(CC) $(CFLAGS) $^ -o $@
-
-$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
-	@echo "$(BLUE)--- Compilando $< ---$(RESET)"
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-FONTE_TESTE = exemplos/teste_vetores1.lp 
+# --- LOOP DE TESTES COM EXIBIÇÃO DE ERRO ---
+test_all: $(TARGET)
+	@echo "Iniciando bateria de testes em $(TEST_DIR)/..."
+	@for file in $(shell ls $(TEST_DIR)/*.lp 2>/dev/null); do \
+		./$(TARGET) $$file > /dev/null 2>&1; \
+		if [ $$? -eq 0 ]; then \
+			echo "Testando $$file... ✅ OK"; \
+		else \
+			echo "Testando $$file... ❌ ERRO ENCONTRADO!"; \
+			echo "------------------------------------------------"; \
+			echo "CONTEÚDO DO ARQUIVO: $$file"; \
+			echo "------------------------------------------------"; \
+			cat $$file; \
+			echo ""; \
+			echo "------------------------------------------------"; \
+		fi \
+	done
 
-# Auditoria: agora depende explicitamente do clean e do target
-audit: clean $(TARGET)
-	@echo "$(BLUE)--- Iniciando Auditoria de Compilacao ---$(RESET)"
-	./$(TARGET) $(FONTE_TESTE) > auditoria_saida.log 2>&1 || (cat auditoria_saida.log && exit 1)
-	@echo "$(BLUE)--- Log de Auditoria ---$(RESET)"
-	@cat auditoria_saida.log
-	@echo "\n$(BLUE)--- Codigo Gerado ---$(RESET)"
-	@if [ -f codigo_gerado.c ]; then cat codigo_gerado.c; else echo "Arquivo codigo_gerado.c não encontrado"; fi
-
-# Regra RUN: Adicionei 'clean' antes de 'audit' para garantir a limpeza total
-run: clean audit
-	@echo "$(BLUE)--- Tentando Compilar Codigo Gerado ---$(RESET)"
-	@if [ -f codigo_gerado.c ]; then \
-		gcc codigo_gerado.c -o meu_programa_p && \
-		echo "$(BLUE)--- Executando Programa Final ---$(RESET)" && \
-		./meu_programa_p; \
-	else \
-		echo "Erro: codigo_gerado.c não existe. Verifique o log de auditoria."; \
-	fi
-
-# Limpeza profunda
 clean:
-	@echo "$(BLUE)--- Limpando Arquivos Temporários ---$(RESET)"
-	rm -f $(SRC_DIR)/*.o $(TARGET) codigo_gerado.c programa_final.c meu_programa_p auditoria_saida.log codigo_generated.c utils.lp.c
+	rm -rf $(OBJ_DIR) $(TARGET) codigo_gerado.c *.log
+	@echo "Limpeza concluída."
+
+.PHONY: clean test_all

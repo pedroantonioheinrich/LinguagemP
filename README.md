@@ -1,241 +1,201 @@
-
-```markdown
-# 🚀 Linguagem P - Compilador de Alto Nível para Simulação de Hardware
-
-A **Linguagem P** é uma linguagem de programação procedural e imperativa, desenvolvida para simplificar a programação de sistemas embarcados e simulação de hardware. Ela abstrai a complexidade do C puro, oferecendo uma sintaxe amigável em português, enquanto mantém a performance através de uma tradução direta para código nativo.
-
-CRIADA POR PEDRO ANTÔNIO HEINRICH NETO
 ---
 
-## 🏗️ 1. Arquitetura do Compilador
+# 📘 Linguagem P - Manual do Compilador e Especificação
 
-O projeto segue o modelo clássico de compiladores de passo único (single-pass), dividido em quatro camadas principais que trabalham em pipeline:
+A **Linguagem P** é uma linguagem de programação procedural, estaticamente tipada, desenvolvida para fins educacionais e de automação simples. Ela combina a clareza da sintaxe em português com a eficiência da compilação para código nativo C.
 
-### A. Analisador Léxico (`src/lexico.c` / `src/lexico.h`)
-O "Scanner". Ele lê o arquivo fonte `.lp` caractere por caractere e os agrupa em **Tokens**.
-- **Comentários:** Ignora automaticamente qualquer texto após `//`.
-- **Palavras-Chave:** Reconhece comandos como `inicio`, `inteiro`, `constante`, `ligar`, `esperar`, etc.
-- **Operadores:** Identifica símbolos matemáticos, incluindo o operador de resto `%` e comparadores relacionais (`==`, `<=`, etc).
-- **Tratamento de Strings:** Captura cadeias de caracteres entre aspas duplas para o comando `exibir`.
-
-
-
-### B. Analisador Sintático (`src/sintatico.c`)
-O "Coração". Ele recebe os tokens e verifica se a ordem das frases respeita as regras gramaticais da Linguagem P.
-- **Recursive Descent Parser:** Utiliza funções recursivas para processar blocos `{}` e comandos.
-- **Sincronização:** Garante que cada comando termine com `;` e que parênteses sejam fechados corretamente.
-- **Tradução On-the-fly:** À medida que valida a gramática, ele já aciona o Gerador de Código.
-
-### C. Analisador Semântico (`src/semantico.c`)
-O "Cérebro". Ele cuida do significado e das regras de negócio da linguagem.
-- **Tabela de Símbolos:** Armazena o nome e o tipo de cada variável declarada.
-- **Proteção de Constantes:** Impede que uma variável declarada como `constante` receba uma nova atribuição (`TOKEN_ATRIBUICAO`) durante o tempo de compilação, emitindo um erro fatal caso o usuário tente alterá-la.
-
-### D. Gerador de Código (`src/gerador.c`)
-O "Tradutor". Ele converte as estruturas da Linguagem P para a sintaxe da linguagem C (ISO C99).
-- Adiciona automaticamente os headers necessários (`stdio.h`, `unistd.h`, `stdbool.h`).
-- Converte o comando `esperar(ms)` para a função `usleep(ms * 1000)` do POSIX.
-- Mapeia os comandos `ligar` e `desligar` para saídas formatadas no console que simulam a ativação de pinos de hardware.
+Este repositório contém o compilador completo, capaz de realizar análise léxica, sintática, semântica e geração de código otimizado.
 
 ---
 
-## 🛠️ 2. Especificação da Linguagem
+## 🚀 1. Visão Geral e Arquitetura
 
-### Tipos de Dados
-- `inteiro`: Números inteiros de 32 bits.
-- `real`: Números de ponto flutuante.
-- `constante`: Modificador que torna uma variável imutável após a inicialização.
+O compilador da Linguagem P opera em um pipeline clássico de tradução:
 
-### Estruturas de Controle
-- `se (condicao) { ... } senao { ... }`: Desvio condicional.
-- `enquanto (condicao) { ... }`: Laço de repetição baseado em predicado.
-
-### Comandos de Hardware (Simulados)
-- `ligar(pino)`: Simula a aplicação de sinal HIGH (3.3v/5v) em um GPIO.
-- `desligar(pino)`: Simula sinal LOW (0v).
-- `esperar(tempo_ms)`: Pausa a execução do programa pelo tempo especificado em milissegundos.
-
-### Interatividade com `ler()`
-Agora a Linguagem P permite entrada de dados dinâmica. O compilador identifica o tipo da variável e gera automaticamente o `scanf` correspondente.
-- **Exemplo:** `inteiro idade = ler();`
-
-### Operadores Lógicos por Extenso
-Para tornar a leitura mais natural, implementamos os operadores lógicos em português:
-- `e` -> Traduzido para `&&`
-- `ou` -> Traduzido para `||`
-
-### Verificação Semântica de Tipos (Type Checking)
-O compilador agora valida se as operações e atribuições são compatíveis com os tipos declarados, evitando erros de execução no programa final.
-
-
+1. **Análise Léxica (`lexico.c`):** Converte o código fonte em uma sequência de tokens (palavras-chave, identificadores, literais).
+2. **Análise Sintática (`sintatico.c`):** Organiza os tokens em estruturas gramaticais (comandos, blocos, funções).
+3. **Análise Semântica (`semantico.c`):** Valida o escopo de variáveis e a consistência dos tipos.
+4. **Geração de Código (`gerador.c`):** Traduz a estrutura para um arquivo `.c` equivalente.
+5. **Runtime de Suporte:** Uma camada de macros e funções pré-definidas para operações de hardware e strings.
 
 ---
 
-## 🚀 3. Como Compilar e Executar
+## 🛠 2. Tipos de Dados e Variáveis
 
-O projeto utiliza um `Makefile` para automatizar o processo de build.
+A Linguagem P suporta quatro tipos fundamentais e estruturas customizadas:
 
-### Pré-requisitos
-- Compilador `gcc` (GNU Compiler Collection).
-- Ferramenta `make`.
+* `inteiro`: Números inteiros (ex: `10`, `-5`).
+* `real`: Números de ponto flutuante (ex: `3.14`).
+* `cadeia`: Sequências de caracteres (ex: `"Olá Mundo"`).
+* `logico`: Valores booleanos (`verdadeiro` ou `falso`).
 
-### Comandos
-1. **Compilar o Compilador:**
-   ```bash
-   make
+### Declaração e Inicialização
+
+Você pode declarar variáveis de forma simples ou com atribuição imediata:
+
+```p
+inteiro idade = 25;
+real saldo;
+saldo = 150.50;
+cadeia nome = "Pedro";
 
 ```
 
-Isso gerará o executável `lp_compilador`.
+---
 
-2. **Compilar e Rodar um Script P:**
-```bash
-./lp_compilador exemplos/meu_codigo.lp
+## 🏗 3. Estruturas de Dados (Registros)
+
+Os **Registros** permitem criar tipos de dados complexos, equivalentes às `structs` da linguagem C.
+
+```p
+registro Usuario {
+    inteiro id;
+    cadeia nome;
+    real saldo;
+}
+
+inicio() {
+    Usuario p1;
+    p1.id = 1;
+    p1.nome = "Pedro";
+    exibir(p1.nome);
+}
 
 ```
 
+---
 
-Este comando gera o arquivo `codigo_gerado.c`, que é automaticamente compilado pelo `make run` para gerar o binário final `meu_programa_p`.
+## 🔄 4. Estruturas de Controle de Fluxo
+
+### Condicionais
+
+A linguagem utiliza a estrutura clássica `se-senao`.
+
+```p
+se (saldo > 100) {
+    exibir("Saldo Rico");
+} senao {
+    exibir("Saldo Pobre");
+}
+
+```
+
+### Laços de Repetição
+
+Existem três formas principais de repetição:
+
+1. **Enquanto:** Executa enquanto a condição for verdadeira.
+2. **Para (Estilo C):** Controle total de inicialização, condição e incremento.
+3. **Para (Simplificado):** Ideal para intervalos.
+4. **Sempre:** Cria um loop infinito (equivalente a `while(1)`).
+
+```p
+// Para simplificado
+para (i de 1 ate 10) {
+    exibir(i);
+}
+
+// Loop sempre
+sempre {
+    exibir("Rodando...");
+    esperar(1000);
+}
+
+```
 
 ---
 
-## 📈 4. Exemplo de Código (`super_teste.lp`)
+## 📂 5. Modularização e Funções
 
-Excelente ideia, Pedro. Adicionar a **Especificação Gramatical (BNF)** eleva o nível do seu projeto, transformando-o de um simples script em uma linguagem formalmente definida.
+As funções na Linguagem P suportam recursividade e retorno de todos os tipos básicos.
 
-Aqui está o seu arquivo `README.md` completo e atualizado, integrando a gramática como o novo tópico 6.
+### Definição de Funções
 
----
+```p
+funcao inteiro fatorial(inteiro n) {
+    se (n <= 1) {
+        retorne 1;
+    }
+    retorne n * fatorial(n - 1);
+}
 
-### 📄 Arquivo: `README.md` (Versão Final com Gramática BNF)
+```
 
-```markdown
-# 🚀 Linguagem P - Compilador de Alto Nível para Simulação de Hardware
+### O Comando `usar`
 
-A **Linguagem P** é uma linguagem de programação procedural e imperativa, desenvolvida para simplificar a programação de sistemas embarcados e simulação de hardware. Ela abstrai a complexidade do C puro, oferecendo uma sintaxe amigável em português, enquanto mantém a performance através de uma tradução direta para código nativo.
+Permite a organização do código em múltiplos arquivos. O compilador ignora a diretiva de inclusão de arquivos `.lp` para permitir que o programador gerencie os módulos na build.
 
----
+```p
+usar "utils.lp"
 
-## 🏗️ 1. Arquitetura do Compilador
-
-O projeto segue o modelo clássico de compiladores de passo único (single-pass), dividido em quatro camadas principais que trabalham em pipeline:
-
-### A. Analisador Léxico (`src/lexico.c`)
-O "Scanner". Ele lê o arquivo fonte `.lp` caractere por caractere e os agrupa em **Tokens**.
-- **Comentários:** Ignora automaticamente qualquer texto após `//`.
-- **Operadores:** Identifica símbolos matemáticos, incluindo o operador de resto `%`.
-
-### B. Analisador Sintático (`src/sintatico.c`)
-O "Coração". Utiliza um algoritmo de **Recursive Descent Parser** para validar a gramática e acionar o gerador de código.
-
-### C. Analisador Semântico (`src/semantico.c`)
-O "Cérebro". Gerencia a **Tabela de Símbolos** e garante a **Proteção de Constantes**, impedindo que valores marcados como `constante` sejam alterados.
-
-### D. Gerador de Código (`src/gerador.c`)
-O "Tradutor". Converte as estruturas da Linguagem P para a sintaxe da linguagem C (ISO C99), incluindo headers como `unistd.h` para suporte ao comando `esperar`.
-
-
+```
 
 ---
 
-## 🛠️ 2. Especificação da Linguagem
+## 🧵 6. Manipulação de Strings
 
-### Tipos de Dados
-- `inteiro`: Números inteiros.
-- `real`: Números de ponto flutuante.
-- `constante`: Modificador de imutabilidade.
+Como a linguagem alvo é C, a Linguagem P abstrai a complexidade de `strcmp` e `strcat` através de funções nativas integradas:
 
-### Comandos de Hardware
-- `ligar(pino)` / `desligar(pino)`: Simula sinais digitais.
-- `esperar(ms)`: Pausa a execução em milissegundos.
-
-### Funções Personalizadas
-Agora a Linguagem P suporta a criação de funções com parâmetros e retorno.
-- **Sintaxe:** `funcao inteiro nome(inteiro param) { ... }`
-
-### Chamadas de Funções e Escopo
-O compilador gerencia chamadas de funções tanto em comandos isolados quanto dentro de atribuições.
-
-### Melhoria no Analisador Léxico
-- Suporte a identificadores com underline (`_`).
-- Melhoria no comando `exibir()` para diferenciar strings de números automaticamente.
-
-### Validação Semântica Avançada
-O compilador agora verifica se uma função foi declarada antes de ser chamada, disparando erros claros no console se houver inconsistências.
+* `iguais(s1, s2)`: Retorna verdadeiro se as cadeias forem idênticas.
+* `juntar(dest, src)`: Concatena a segunda string ao final da primeira.
 
 ---
 
-## 📜 6. Gramática Formal (BNF)
+## 🔌 7. Integração com Hardware (Modo Automação)
 
-Abaixo está a definição formal da sintaxe da Linguagem P em Backus-Naur Form. Esta gramática define a hierarquia de precedência e a estrutura de todos os comandos suportados.
+A Linguagem P foi projetada para suportar comandos simplificados para prototipagem:
+
+* `ligar(pino)`: Ativa um sinal em um pino específico.
+* `desligar(pino)`: Desativa o sinal.
+* `esperar(ms)`: Pausa a execução por milissegundos específicos.
+
+---
+
+## 📋 8. Gramática Resumida (BNF)
 
 ```bnf
-<programa>         ::= "inicio" "(" ")" <bloco>
-
-<bloco>            ::= "{" <lista_comandos> "}"
-
-<lista_comandos>   ::= <comando> <lista_comandos> | ε
-
-<comando>          ::= <declaracao> ";"
-                     | <atribuicao> ";"
-                     | <atribuicao_composta> ";"
-                     | <comando_se>
-                     | <comando_enquanto>
-                     | <comando_para>
-                     | <comando_exibir> ";"
-                     | <comando_hardware> ";"
-
-<atribuicao_composta> ::= <id> "+=" <expressao>
-                        | <id> "-=" <expressao>
-
-<comando_para>     ::= "para" "(" [<declaracao_simples> | <atribuicao>] ";" <expressao_logica> ";" <atribuicao> ")" <bloco>
-
-<declaracao>       ::= "inteiro" <id> [ "=" <expressao> ]
-                     | "real" <id> [ "=" <expressao> ]
-                     | "constante" <tipo_base> <id> "=" <expressao>
-
-<tipo_base>        ::= "inteiro" | "real"
-
-<atribuicao>       ::= <id> "=" <expressao>
-
-<comando_se>       ::= "se" "(" <expressao_logica> ")" <bloco> [ "senao" <bloco> ]
-
-<comando_enquanto> ::= "enquanto" "(" <expressao_logica> ")" <bloco>
-
-<expressao_logica> ::= <expressao> <op_relacional> <expressao>
-
-<expressao>        ::= <termo> { <op_aditivo> <termo> }
-
-<termo>            ::= <fator> { <op_multiplicativo> <fator> }
-
-<op_multiplicativo> ::= "*" | "/" | "%"
-
-<id>               ::= [a-zA-Z_][a-zA-Z0-9_]*
-<numero>           ::= [0-9]+ [ "." [0-9]+ ]
+<programa>    ::= (<declaracao> | <funcao> | <registro> | <inicio>)*
+<inicio>      ::= "inicio" "(" ")" <bloco>
+<comando>     ::= <se> | <enquanto> | <para> | <atribuicao> | <exibir> | <retorno>
+<expressao>   ::= <termo> ( ( "+" | "-" | "*" | "/" ) <termo> )*
+<termo>       ::= <identificador> | <literal> | "(" <expressao> ")"
 
 ```
 
 ---
 
-## 🚀 3. Como Compilar e Executar
+## ⚙️ 9. Compilação e Execução
 
-1. **Build do Compilador:**
+Para compilar o projeto:
+
+1. **Limpar builds anteriores:**
 ```bash
-make clean && make
+rm -rf obj compilador_p
+mkdir obj
 
 ```
 
 
-2. **Compilação do Script .lp:**
+2. **Compilar o tradutor:**
 ```bash
-./lp_compilador exemplos/super_teste.lp
+gcc -Wall -Wextra -g -Iinclude -c src/*.c
+mv *.o obj/
+gcc -o compilador_p obj/*.o
 
 ```
 
 
-3. **Execução do Programa:**
+3. **Gerar código C a partir de um arquivo `.lp`:**
 ```bash
-./meu_programa_p
+./compilador_p arquivo.lp
+
+```
+
+
+4. **Compilar o código gerado:**
+```bash
+gcc codigo_gerado.c -o programa_final
+./programa_final
 
 ```
 
@@ -243,11 +203,20 @@ make clean && make
 
 ---
 
-## 📂 5. Organização de Arquivos
+## 🛠 10. Decisões de Implementação (FAQ)
 
-* `src/`: Código-fonte do compilador.
-* `exemplos/`: Scripts de teste.
-* `Makefile`: Automação de build.
+**Por que compilar para C em vez de Assembly?**
+C oferece uma camada de portabilidade e otimização de baixo nível que permite à Linguagem P rodar em diversas arquiteturas (x86, ARM, RISC-V) sem reescrever o gerador.
 
+**Como funciona o tratamento de `retorno` e `retorne`?**
+O analisador sintático foi ajustado para ser flexível. Ele identifica o token `TOKEN_RETORNO` mas também realiza uma comparação de lexema para aceitar a variante `retorne`, garantindo compatibilidade com diferentes estilos de escrita dos testes.
 
-```
+**Como o escopo é gerenciado?**
+O `semantico.c` utiliza uma pilha de tabelas de símbolos. Ao entrar em um novo bloco `{`, um novo nível de escopo é criado, sendo destruído ao encontrar o `}` correspondente, garantindo que variáveis locais não vazem para o escopo global.
+
+---
+
+Este documento serve como a especificação oficial da versão 1.0 da Linguagem P.
+
+---
+

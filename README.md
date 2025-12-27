@@ -1,6 +1,3 @@
-## 📄 Arquivo: `README.md`
-
-```markdown
 # 📘 Linguagem P - Manual do Compilador e Especificação
 
 > **Criador e Desenvolvedor:** Pedro Antônio Heinrich  
